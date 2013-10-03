@@ -9,7 +9,7 @@
 		<dependency>
 			<groupId>org.activiti</groupId>
 			<artifactId>activiti-engine</artifactId>
-			<version>5.12</version>
+			<version>5.13</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -45,6 +45,18 @@
                 <configuration>
                     <source>1.6</source>
                     <target>1.6</target>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.16</version>
+                <configuration>
+                    <!-- test will pass with
+                    <argLine>-Dfile.encoding=UTF-8</argLine>
+                    -->
+                    <argLine>-Dfile.encoding=windows-1250</argLine>
                 </configuration>
             </plugin>
         </plugins>
