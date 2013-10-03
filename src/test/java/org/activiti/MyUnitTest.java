@@ -9,18 +9,25 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class MyUnitTest {
-	
+
 	@Rule
 	public ActivitiRule activitiRule = new ActivitiRule();
-	
+
 	@Test
 	@Deployment(resources = {"org/activiti/test/my-process.bpmn20.xml"})
 	public void test() {
 		ProcessInstance processInstance = activitiRule.getRuntimeService().startProcessInstanceByKey("my-process");
 		assertNotNull(processInstance);
-		
+
 		Task task = activitiRule.getTaskService().createTaskQuery().singleResult();
 		assertEquals("Activiti is awesome!", task.getName());
+	}
+
+	@Test
+	@Deployment(resources = {"org/activiti/test/failed.bpmn20.xml"})
+	public void testCreateBpmnXmlFailed() {
+		ProcessInstance processInstance = activitiRule.getRuntimeService().startProcessInstanceByKey("TechSample");
+		assertNotNull(processInstance);
 	}
 
 }
