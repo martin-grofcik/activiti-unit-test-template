@@ -16,7 +16,7 @@ public class MyUnitTest {
 	@Test
 	@Deployment(resources = {"org/activiti/test/my-process.bpmn20.xml"})
 	public void test() {
-		ProcessInstance processInstance = activitiRule.getRuntimeService().startProcessInstanceByKey("my-process");
+		ProcessInstance processInstance = activitiRule.getRuntimeService().startProcessInstanceByKey("genericRequest");
 		assertNotNull(processInstance);
 		
 		Task task = activitiRule.getTaskService().createTaskQuery().singleResult();

@@ -1,21 +1,203 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:activiti="http://activiti.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://activiti.org/bpmn20">
+  <signal id="cancelRequest" name="cancelRequest"></signal>
+  <process id="genericRequest" name="genericRequest" isExecutable="true">
+    <documentation>General workflow to validate any type of request
+      - requestInitiator :
+      initiator of
+      the request (for tracability)
+      - requestDelegated : either
+      initiator of
+      the request or delegated
+      people (admin on behalf of the
+      initiator)
+      -
+      validationUsers : list of users that must validate the
+      request
+      TODO :
+      before mail task in subprocess : check for "deputy" +
+      reassign if
+      needed or canceled the whole task
+    </documentation>
+    <startEvent id="requestStart" name="Request Started"></startEvent>
+    <subProcess id="userValidation" name="User Validation">
+      <multiInstanceLoopCharacteristics isSequential="true" activiti:collection="validationUsers"
+                                        activiti:elementVariable="user">
+        <completionCondition>${approved=="false" || state=="CANCELLED"}</completionCondition>
+      </multiInstanceLoopCharacteristics>
+      <startEvent id="startevent1" name="Start"></startEvent>
+      <userTask id="validateRequest" name="Validate Request" activiti:assignee="${user}">
+        <extensionElements>
+          <activiti:executionListener event="start"
+                                      expression="#{validationListener.notifyExpression(execution)}"></activiti:executionListener>
+          <activiti:executionListener event="end"
+                                      expression="#{validationListener.notifyExpression(execution)}"></activiti:executionListener>
+        </extensionElements>
+      </userTask>
+      <exclusiveGateway id="requestRejecedOrApproved" name="Request rejected or Approved check"
+                        default="flow15"></exclusiveGateway>
+      <sequenceFlow id="validateRequestToGatewayFlow" sourceRef="validateRequest"
+                    targetRef="requestRejecedOrApproved"></sequenceFlow>
+      <endEvent id="endevent1" name="End">
+        <extensionElements>
+          <activiti:executionListener event="start"
+                                      expression="#{validationListener.setValidator(execution, user)}"></activiti:executionListener>
+        </extensionElements>
+      </endEvent>
+      <endEvent id="endevent2" name="End">
+        <extensionElements>
+          <activiti:executionListener event="start"
+                                      expression="#{validationListener.setRejecter(execution, user)}"></activiti:executionListener>
+        </extensionElements>
+      </endEvent>
+      <endEvent id="endReminder" name="End"></endEvent>
+      <sequenceFlow id="flow15" sourceRef="requestRejecedOrApproved" targetRef="endevent1"></sequenceFlow>
+      <serviceTask id="sendNotificationMail" name="Send Notification Task" activiti:async="true"
+                   activiti:exclusive="false"
+                   activiti:expression="#{mailingDelegate.sendValidationMail(execution, validationMailId, user)}"></serviceTask>
+      <sequenceFlow id="flow18" sourceRef="startevent1" targetRef="sendNotificationMail"></sequenceFlow>
+      <sequenceFlow id="flow19" sourceRef="sendNotificationMail" targetRef="validateRequest"></sequenceFlow>
+      <sequenceFlow id="flow21" sourceRef="servicetask11" targetRef="endReminder"></sequenceFlow>
+      <serviceTask id="servicetask2" name="Request rejected notification" activiti:async="true"
+                   activiti:exclusive="false"
+                   activiti:expression="#{mailingDelegate.sendRejectionMail(execution, rejectionMailId)}"></serviceTask>
+      <sequenceFlow id="flow22" sourceRef="requestRejecedOrApproved" targetRef="servicetask2">
+        <conditionExpression xsi:type="tFormalExpression">
+          <![CDATA[${approved=="false" && state != "CANCELLED"}]]></conditionExpression>
+      </sequenceFlow>
+      <sequenceFlow id="flow23" sourceRef="servicetask2" targetRef="endevent2"></sequenceFlow>
+      <endEvent id="endevent3" name="End"></endEvent>
+      <sequenceFlow id="flow25" sourceRef="servicetask13" targetRef="endevent3"></sequenceFlow>
+      <serviceTask id="servicetask11" name="Send Reminder Task" activiti:async="true" activiti:exclusive="false"
+                   activiti:expression="#{mailingDelegate.sendValidationMail(execution, validationMailId, user)}"></serviceTask>
+      <serviceTask id="servicetask13" name="Send Cancellation Notification"
+                   activiti:expression="#{mailingDelegate.sendCancellationMail(execution, &quot;cancellationMail&quot;, user)}"
+                   activiti:resultVariableName="state"></serviceTask>
+    </subProcess>
+    <serviceTask id="servicetask1" name="Send Reminder Task" activiti:async="true" activiti:exclusive="false"
+                 activiti:expression="#{mailingDelegate.sendValidationMail(execution, validationMailId, user)}"></serviceTask>
+    <serviceTask id="servicetask3" name="Send Cancellation Notification"
+                 activiti:expression="#{mailingDelegate.sendCancellationMail(execution, &quot;cancellationMail&quot;, user)}"
+                 activiti:resultVariableName="state"></serviceTask>
 
-<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:activiti="http://activiti.org/bpmn"
-	xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
-	xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" typeLanguage="http://www.w3.org/2001/XMLSchema"
-	expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.activiti.org/test">
-
-	<process id="my-process">
-
-		<startEvent id="start" />
-		<sequenceFlow id="flow1" sourceRef="start" targetRef="someTask" />
-		
-		<userTask id="someTask" name="Activiti is awesome!" />
-		<sequenceFlow id="flow2" sourceRef="someTask" targetRef="end" />
-
-		<endEvent id="end" />
-
-	</process>
-
+    <sequenceFlow id="flow4" sourceRef="requestStart" targetRef="userValidation"></sequenceFlow>
+    <endEvent id="endProcess" name="End"></endEvent>
+    <sequenceFlow id="flow11" sourceRef="userValidation" targetRef="endProcess"></sequenceFlow>
+    <boundaryEvent id="reminderTimer" name="Reminder Timer" attachedToRef="userValidation" cancelActivity="false">
+      <timerEventDefinition>
+        <timeCycle>R/P7D</timeCycle>
+      </timerEventDefinition>
+    </boundaryEvent>
+    <sequenceFlow id="flow20" sourceRef="reminderTimer" targetRef="servicetask1"></sequenceFlow>
+    <boundaryEvent id="boundarysignal1" name="Signal" attachedToRef="userValidation" cancelActivity="true">
+      <signalEventDefinition signalRef="cancelRequest"></signalEventDefinition>
+    </boundaryEvent>
+    <sequenceFlow id="flow24" sourceRef="boundarysignal1" targetRef="servicetask3"></sequenceFlow>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_genericRequest">
+    <bpmndi:BPMNPlane bpmnElement="genericRequest" id="BPMNPlane_genericRequest">
+      <bpmndi:BPMNShape bpmnElement="requestStart" id="BPMNShape_requestStart">
+        <omgdc:Bounds height="35.0" width="35.0" x="434.0" y="23.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="userValidation" id="BPMNShape_userValidation">
+        <omgdc:Bounds height="571.0" width="541.0" x="181.0" y="150.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="startevent1" id="BPMNShape_startevent1">
+        <omgdc:Bounds height="35.0" width="35.0" x="361.0" y="170.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="validateRequest" id="BPMNShape_validateRequest">
+        <omgdc:Bounds height="55.0" width="105.0" x="326.0" y="322.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="requestRejecedOrApproved" id="BPMNShape_requestRejecedOrApproved">
+        <omgdc:Bounds height="40.0" width="40.0" x="358.0" y="447.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="endevent1" id="BPMNShape_endevent1">
+        <omgdc:Bounds height="35.0" width="35.0" x="460.0" y="450.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="endevent2" id="BPMNShape_endevent2">
+        <omgdc:Bounds height="35.0" width="35.0" x="246.0" y="520.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="endReminder" id="BPMNShape_endReminder">
+        <omgdc:Bounds height="35.0" width="35.0" x="225.0" y="560.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="sendNotificationMail" id="BPMNShape_sendNotificationMail">
+        <omgdc:Bounds height="55.0" width="105.0" x="326.0" y="240.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="servicetask1" id="BPMNShape_servicetask1">
+        <omgdc:Bounds height="55.0" width="105.0" x="190.0" y="610.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="servicetask2" id="BPMNShape_servicetask2">
+        <omgdc:Bounds height="55.0" width="105.0" x="211.0" y="440.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="servicetask3" id="BPMNShape_servicetask3">
+        <omgdc:Bounds height="55.0" width="105.0" x="494.0" y="610.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="endevent3" id="BPMNShape_endevent3">
+        <omgdc:Bounds height="35.0" width="35.0" x="529.0" y="540.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="reminderTimer" id="BPMNShape_reminderTimer">
+        <omgdc:Bounds height="30.0" width="30.0" x="228.0" y="690.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="boundarysignal1" id="BPMNShape_boundarysignal1">
+        <omgdc:Bounds height="30.0" width="30.0" x="628.0" y="690.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="endProcess" id="BPMNShape_endProcess">
+        <omgdc:Bounds height="35.0" width="35.0" x="427.0" y="760.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="validateRequestToGatewayFlow" id="BPMNEdge_validateRequestToGatewayFlow">
+        <omgdi:waypoint x="378.0" y="377.0"></omgdi:waypoint>
+        <omgdi:waypoint x="378.0" y="447.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow15" id="BPMNEdge_flow15">
+        <omgdi:waypoint x="398.0" y="467.0"></omgdi:waypoint>
+        <omgdi:waypoint x="460.0" y="467.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow18" id="BPMNEdge_flow18">
+        <omgdi:waypoint x="378.0" y="205.0"></omgdi:waypoint>
+        <omgdi:waypoint x="378.0" y="240.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow19" id="BPMNEdge_flow19">
+        <omgdi:waypoint x="378.0" y="295.0"></omgdi:waypoint>
+        <omgdi:waypoint x="378.0" y="322.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow21" id="BPMNEdge_flow21">
+        <omgdi:waypoint x="242.0" y="610.0"></omgdi:waypoint>
+        <omgdi:waypoint x="242.0" y="595.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow22" id="BPMNEdge_flow22">
+        <omgdi:waypoint x="358.0" y="467.0"></omgdi:waypoint>
+        <omgdi:waypoint x="316.0" y="467.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow23" id="BPMNEdge_flow23">
+        <omgdi:waypoint x="263.0" y="495.0"></omgdi:waypoint>
+        <omgdi:waypoint x="263.0" y="520.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow25" id="BPMNEdge_flow25">
+        <omgdi:waypoint x="546.0" y="610.0"></omgdi:waypoint>
+        <omgdi:waypoint x="546.0" y="575.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow4" id="BPMNEdge_flow4">
+        <omgdi:waypoint x="451.0" y="58.0"></omgdi:waypoint>
+        <omgdi:waypoint x="451.0" y="150.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow11" id="BPMNEdge_flow11">
+        <omgdi:waypoint x="451.0" y="721.0"></omgdi:waypoint>
+        <omgdi:waypoint x="444.0" y="760.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow20" id="BPMNEdge_flow20">
+        <omgdi:waypoint x="243.0" y="690.0"></omgdi:waypoint>
+        <omgdi:waypoint x="242.0" y="665.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow24" id="BPMNEdge_flow24">
+        <omgdi:waypoint x="643.0" y="690.0"></omgdi:waypoint>
+        <omgdi:waypoint x="642.0" y="638.0"></omgdi:waypoint>
+        <omgdi:waypoint x="599.0" y="637.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
 </definitions>
