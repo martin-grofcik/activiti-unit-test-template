@@ -1,4 +1,5 @@
 package org.activiti;
+import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
 import org.activiti.engine.test.ActivitiRule;
@@ -16,11 +17,8 @@ public class MyUnitTest {
 	@Test
 	@Deployment(resources = {"org/activiti/test/my-process.bpmn20.xml"})
 	public void test() {
-		ProcessInstance processInstance = activitiRule.getRuntimeService().startProcessInstanceByKey("my-process");
-		assertNotNull(processInstance);
-		
-		Task task = activitiRule.getTaskService().createTaskQuery().singleResult();
-		assertEquals("Activiti is awesome!", task.getName());
+    ProcessDefinition processDefinition = activitiRule.getRepositoryService().createProcessDefinitionQuery().processDefinitionKey("genericRequest").singleResult();
+    assertNotNull("Valid process definition has to be deployed.", processDefinition);
 	}
 
 }
