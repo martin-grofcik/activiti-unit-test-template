@@ -1,21 +1,148 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<definitions id="definitions"
+             xmlns:here="com.nomura.xmlns.booksdetailsservice.getBooksDetailsImpl.Process_sp_Definitions.BooksInterface"
+             xmlns:classObject="http://xmlns.nomura.com/booksdetailsservice/getBooksDetailsImpl/Process_sp_Definitions"
+             xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:activiti="http://activiti.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="com.nomura.xmlns.booksdetailsservice.getBooksDetailsImpl.Process_sp_Definitions.BooksInterface">
 
-<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:activiti="http://activiti.org/bpmn"
-	xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
-	xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" typeLanguage="http://www.w3.org/2001/XMLSchema"
-	expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.activiti.org/test">
+  <import importType="http://schemas.xmlsoap.org/wsdl/"
+          location="http://localhost:5566/Process%20Definitions/GetBookDetailsService?wsdl"
+          namespace="http://xmlns.nomura.com/booksdetailsservice/getBooksDetailsImpl/Process_sp_Definitions"/>
 
-	<process id="my-process">
+  <message id="bookDetailsRequestMessage" itemRef="here:BooksReq"/>
+  <message id="bookDetailsResponseMessage" itemRef="here:BooksRes"/>
 
-		<startEvent id="start" />
-		<sequenceFlow id="flow1" sourceRef="start" targetRef="someTask" />
-		
-		<userTask id="someTask" name="Activiti is awesome!" />
-		<sequenceFlow id="flow2" sourceRef="someTask" targetRef="end" />
+  <itemDefinition id="BooksReqItem" structureRef="here:ReqMessage"/>
+  <itemDefinition id="BooksResItem" structureRef="here:ResMessage"/>
 
-		<endEvent id="end" />
+  <interface name="Get Book Details" implementationRef="classObject:BooksInterface">
+    <operation id="getBooksDetailsOperation" name="Get Book Details Operation"
+               implementationRef="classObject:getBooksDetails">
+      <inMessageRef>here:bookDetailsRequestMessage</inMessageRef>
+      <outMessageRef>here:bookDetailsResponseMessage</outMessageRef>
+    </operation>
+  </interface>
 
-	</process>
+  <process id="getBookDetails" name="Get Book Details" isExecutable="true">
 
+    <dataObject id="dataInputOfProcess" itemSubjectRef="here:BooksReq"/>
+    <dataObject id="dataOutputOfProcess" itemSubjectRef="here:BooksRes"/>
+
+    <startEvent id="startevent1" name="Start"></startEvent>
+    <userTask id="placeOrder" name="Place Order" activiti:assignee="fozzie">
+      <extensionElements>
+        <activiti:formProperty id="bookName" name="Book Name" type="string" variable="bname"
+                               required="true"></activiti:formProperty>
+        <activiti:formProperty id="pulisher" name="Publisher" type="string" variable="pub"
+                               required="true"></activiti:formProperty>
+        <activiti:formProperty id="quantity" name="Quantity" type="int" variable="quan"
+                               required="true"></activiti:formProperty>
+      </extensionElements>
+    </userTask>
+    <serviceTask id="servicetask1" name="Service Task" implementation="##WebService"
+                 operationRef="here:getBooksDetailsOperation">
+      <ioSpecification>
+        <dataInput itemSubjectRef="here:BooksReqItem" isCollection="false" id="BooksReq"/>
+        <dataOutput itemSubjectRef="here:BooksResItem" isCollection="false" id="BooksRes"/>
+        <inputSet>
+          <dataInputRefs>BooksReq</dataInputRefs>
+        </inputSet>
+        <outputSet>
+          <dataOutputRefs>BooksRes</dataOutputRefs>
+        </outputSet>
+      </ioSpecification>
+
+      <dataInputAssociation>
+        <sourceRef>bname</sourceRef>
+        <targetRef>bookName</targetRef>
+      </dataInputAssociation>
+
+      <dataInputAssociation>
+        <sourceRef>pub</sourceRef>
+        <targetRef>publisher</targetRef>
+      </dataInputAssociation>
+
+      <dataInputAssociation>
+        <sourceRef>quan</sourceRef>
+        <targetRef>quantity</targetRef>
+      </dataInputAssociation>
+
+      <dataOutputAssociation>
+        <sourceRef>bname</sourceRef>
+        <targetRef>bookName</targetRef>
+      </dataOutputAssociation>
+
+      <dataOutputAssociation>
+        <sourceRef>pub</sourceRef>
+        <targetRef>publisher</targetRef>
+      </dataOutputAssociation>
+
+      <dataOutputAssociation>
+        <sourceRef>quan</sourceRef>
+        <targetRef>quantity</targetRef>
+      </dataOutputAssociation>
+
+      <dataOutputAssociation>
+        <sourceRef>remarks</sourceRef>
+        <targetRef>remarks</targetRef>
+      </dataOutputAssociation>
+
+    </serviceTask>
+    <userTask id="sendBookDetails" name="Send Book Details" activiti:assignee="regmanager">
+      <extensionElements>
+        <activiti:formProperty id="bookName" name="Book Name" type="string" variable="bname"
+                               writable="false"></activiti:formProperty>
+        <activiti:formProperty id="quantity" name="Quantity" type="int" variable="quan"
+                               required="true"></activiti:formProperty>
+        <activiti:formProperty id="publisher" name="Publisher" type="string" variable="pub"
+                               writable="false"></activiti:formProperty>
+        <activiti:formProperty id="remarks" name="Remarks" type="string" variable="remarks"
+                               required="true"></activiti:formProperty>
+      </extensionElements>
+    </userTask>
+    <endEvent id="endevent1" name="End"></endEvent>
+    <sequenceFlow id="flow1" sourceRef="startevent1" targetRef="placeOrder"></sequenceFlow>
+    <sequenceFlow id="flow2" sourceRef="placeOrder" targetRef="servicetask1"></sequenceFlow>
+    <sequenceFlow id="flow3" sourceRef="servicetask1" targetRef="sendBookDetails"></sequenceFlow>
+    <sequenceFlow id="flow4" sourceRef="sendBookDetails" targetRef="endevent1"></sequenceFlow>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_getBookDetails">
+    <bpmndi:BPMNPlane bpmnElement="getBookDetails" id="BPMNPlane_getBookDetails">
+      <bpmndi:BPMNShape bpmnElement="startevent1" id="BPMNShape_startevent1">
+        <omgdc:Bounds height="35.0" width="35.0" x="50.0" y="200.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="placeOrder" id="BPMNShape_placeOrder">
+        <omgdc:Bounds height="55.0" width="105.0" x="140.0" y="190.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="servicetask1" id="BPMNShape_servicetask1">
+        <omgdc:Bounds height="55.0" width="105.0" x="300.0" y="190.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="sendBookDetails" id="BPMNShape_sendBookDetails">
+        <omgdc:Bounds height="55.0" width="105.0" x="300.0" y="321.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="endevent1" id="BPMNShape_endevent1">
+        <omgdc:Bounds height="35.0" width="35.0" x="335.0" y="420.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="flow1" id="BPMNEdge_flow1">
+        <omgdi:waypoint x="85.0" y="217.0"></omgdi:waypoint>
+        <omgdi:waypoint x="140.0" y="217.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow2" id="BPMNEdge_flow2">
+        <omgdi:waypoint x="245.0" y="217.0"></omgdi:waypoint>
+        <omgdi:waypoint x="300.0" y="217.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow3" id="BPMNEdge_flow3">
+        <omgdi:waypoint x="352.0" y="245.0"></omgdi:waypoint>
+        <omgdi:waypoint x="352.0" y="321.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow4" id="BPMNEdge_flow4">
+        <omgdi:waypoint x="352.0" y="376.0"></omgdi:waypoint>
+        <omgdi:waypoint x="352.0" y="420.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
 </definitions>
