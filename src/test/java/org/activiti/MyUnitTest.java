@@ -1,13 +1,12 @@
 package org.activiti;
+
 import org.activiti.engine.repository.ProcessDefinition;
-import org.activiti.engine.runtime.ProcessInstance;
-import org.activiti.engine.task.Task;
 import org.activiti.engine.test.ActivitiRule;
 import org.activiti.engine.test.Deployment;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
 
 public class MyUnitTest {
 	
@@ -17,7 +16,7 @@ public class MyUnitTest {
 	@Test
 	@Deployment(resources = {"org/activiti/test/my-process.bpmn20.xml"})
 	public void test() {
-    ProcessDefinition processDefinition = activitiRule.getRepositoryService().createProcessDefinitionQuery().processDefinitionKey("genericRequest").singleResult();
+    ProcessDefinition processDefinition = activitiRule.getRepositoryService().createProcessDefinitionQuery().processDefinitionKey("analysis").singleResult();
     assertNotNull("Valid process definition has to be deployed.", processDefinition);
 	}
 
