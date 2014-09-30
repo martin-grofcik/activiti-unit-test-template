@@ -1,21 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:activiti="http://activiti.org/bpmn"
-	xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
-	xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" typeLanguage="http://www.w3.org/2001/XMLSchema"
-	expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.activiti.org/test">
-
-	<process id="my-process">
-
-		<startEvent id="start" />
-		<sequenceFlow id="flow1" sourceRef="start" targetRef="someTask" />
-		
-		<userTask id="someTask" name="Activiti is awesome!" />
-		<sequenceFlow id="flow2" sourceRef="someTask" targetRef="end" />
-
-		<endEvent id="end" />
-
-	</process>
+             xmlns:activiti="http://activiti.org/bpmn"
+             typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="cpd.bei-sg.ch">
+  <process id="processAcsessSubprocessMultiinstanceVariable" name="testAcsessSubprocessMultiinstanceVariable"
+           isExecutable="true">
+    <startEvent id="startevent1" name="Start" activiti:initiator="initiator"/>
+    <endEvent id="endevent1" name="End"/>
+    <sequenceFlow id="flow1" sourceRef="startevent1" targetRef="subprocessMultiinstance"/>
+    <subProcess id="subprocessMultiinstance" name="Multi-instance Subprocess">
+      <multiInstanceLoopCharacteristics isSequential="false" activiti:collection="collectionVariables"
+                                        activiti:elementVariable="elementVariable"/>
+      <userTask id="userTask1" name="User Task" activiti:assignee="${initiator}">
+        <extensionElements>
+          <activiti:formProperty id="test" name="test" type="string" variable="test"/>
+        </extensionElements>
+      </userTask>
+      <startEvent id="startevent2" name="Start"/>
+      <endEvent id="endevent2" name="End"/>
+      <sequenceFlow id="flow3" sourceRef="startevent2" targetRef="userTask1"/>
+      <sequenceFlow id="flow4" sourceRef="userTask1" targetRef="endevent2"/>
+    </subProcess>
+    <sequenceFlow id="flow2" sourceRef="subprocessMultiinstance" targetRef="endevent1"/>
+  </process>
 
 </definitions>
