@@ -1,21 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:activiti="http://activiti.org/bpmn"
-	xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
-	xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" typeLanguage="http://www.w3.org/2001/XMLSchema"
-	expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.activiti.org/test">
+             xmlns:activiti="http://activiti.org/bpmn"
+             typeLanguage="http://www.w3.org/2001/XMLSchema"
+             expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.activiti.org/test">
 
-	<process id="my-process">
-
-		<startEvent id="start" />
-		<sequenceFlow id="flow1" sourceRef="start" targetRef="someTask" />
-		
-		<userTask id="someTask" name="Activiti is awesome!" />
-		<sequenceFlow id="flow2" sourceRef="someTask" targetRef="end" />
-
-		<endEvent id="end" />
-
-	</process>
-
+  <process id="my-process" name="My process" isExecutable="true">
+    <startEvent id="startevent1" name="Start"/>
+    <subProcess id="taxDeclareSubProcess" name="Tax Declaration Sub Process">
+      <startEvent id="startevent2" name="SubStart"/>
+      <userTask id="usertask1" name="User Task"/>
+      <sequenceFlow id="flow2" sourceRef="startevent2" targetRef="usertask1"/>
+      <userTask id="usertask2" name="User Task"/>
+      <sequenceFlow id="flow3" sourceRef="usertask1" targetRef="usertask2"/>
+      <endEvent id="endevent3" name="SubEnd"/>
+      <sequenceFlow id="flow7" sourceRef="usertask2" targetRef="endevent3"/>
+    </subProcess>
+    <sequenceFlow id="flow1" sourceRef="startevent1" targetRef="taxDeclareSubProcess"/>
+    <endEvent id="endevent2" name="End"/>
+    <sequenceFlow id="flow5" sourceRef="taxDeclareSubProcess" targetRef="endevent2"/>
+    <boundaryEvent id="boundarytimer1" name="Timer" attachedToRef="taxDeclareSubProcess" cancelActivity="false">
+      <timerEventDefinition>
+        <timeDuration>PT4H</timeDuration>
+      </timerEventDefinition>
+    </boundaryEvent>
+    <serviceTask id="servicetask1" name="Initimate user" activiti:delegateExpression="${SendEmailTask}"/>
+    <sequenceFlow id="flow6" sourceRef="boundarytimer1" targetRef="servicetask1"/>
+  </process>
 </definitions>
