@@ -8,6 +8,14 @@
     <property name="jdbcDriver" value="org.h2.Driver" />
     <property name="jdbcUsername" value="sa" />
     <property name="jdbcPassword" value="" />
+    <!-- job executor configurations -->
+    <property name="jobExecutorActivate" value="true"/>
+    <property name="eventListeners">
+      <list>
+        <bean class="org.activiti.TestInitializedEntityEventListener"/>
+      </list>
+    </property>
+
   </bean>
 
 </beans>
