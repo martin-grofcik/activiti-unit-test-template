@@ -4,10 +4,25 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans   http://www.springframework.org/schema/beans/spring-beans.xsd">
 
   <bean id="processEngineConfiguration" class="org.activiti.engine.impl.cfg.StandaloneInMemProcessEngineConfiguration">
-    <property name="jdbcUrl" value="jdbc:h2:mem:activiti;DB_CLOSE_DELAY=1000" />
-    <property name="jdbcDriver" value="org.h2.Driver" />
-    <property name="jdbcUsername" value="sa" />
-    <property name="jdbcPassword" value="" />
+    <!--<property name="jdbcUrl" value="jdbc:oracle:thin:@localhost:1521:XE" />-->
+    <!--<property name="jdbcDriver" value="oracle.jdbc.OracleDriver" />-->
+    <!--<property name="jdbcUsername" value="user" />-->
+    <!--<property name="jdbcPassword" value="passwd" />-->
+    <!--<property name="databaseSchema" value="drop-create"/>-->
+
+    <property name="jdbcUrl" value="jdbc:h2:mem:activiti;DB_CLOSE_DELAY=1000"/>
+    <property name="jdbcDriver" value="org.h2.Driver"/>
+    <property name="jdbcUsername" value="sa"/>
+    <property name="jdbcPassword" value=""/>
+
+    <!--<property name="jobExecutor" ref="lockFreeJobExecutor"/>-->
+    <property name="jobExecutor" ref="defaultJobExecutor"/>
   </bean>
+
+  <bean id="defaultJobExecutor" class="org.activiti.engine.impl.jobexecutor.DefaultJobExecutor">
+    <property name="maxJobsPerAcquisition" value="50"/>
+  </bean>
+
+  <!--<bean id="lockFreeJobExecutor" class="org.activiti.engine.impl.jobexecutor.LockFreeJobExecutor"/>-->
 
 </beans>
