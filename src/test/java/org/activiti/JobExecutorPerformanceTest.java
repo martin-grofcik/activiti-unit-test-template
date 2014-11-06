@@ -33,4 +33,8 @@ public class JobExecutorPerformanceTest extends PluggableActivitiTestCase {
     LOG.info(" Duration :" + (endTime - startTime));
   }
 
+  @Override
+  protected void assertAndEnsureCleanDb() {
+  }
+
 }
