@@ -15,21 +15,22 @@ public class JobExecutorPerformanceTest extends PluggableActivitiTestCase {
   private static final Logger LOG = LoggerFactory.getLogger(JobExecutorPerformanceTest.class);
 
   @Test
-  @Deployment(resources = {"org/activiti/test/timer-process.bpmn20.xml"})
-  public void testJobExecutorTimerPerformance() throws InterruptedException {
-    // GIVEN - start 1.000 process instances. (they have all current time + 10sec timer set
-    for (int i = 0; i < 1000; i++) {
-      ProcessInstance processInstance = this.runtimeService.startProcessInstanceByKey("timer-process");
+  @Deployment(resources = {"org/activiti/test/wf.module.test.bp.timer.bpmn20.xml"})
+  public void testJobExecutorTimerPerformanceTimerProcess() throws InterruptedException {
+    // GIVEN - start 1.500 process instances.
+    for (int i = 0; i < 1500; i++) {
+      ProcessInstance processInstance = this.runtimeService.startProcessInstanceByKey("wf.module.test.bp.timer");
       assertNotNull(processInstance);
     }
 
-    // WHEN - we want to process all jobs
+    // WHEN - we want to process all jobs. Limit is 500 seconds.
     long startTime = System.currentTimeMillis();
-    waitForJobExecutorToProcessAllJobs(100 * 1000, 500);
+    waitForJobExecutorToProcessAllJobs(500 * 1000, 500);
 
     // THEN - no process instance is running.
     assertThat("There is no running process instance in the engine", this.runtimeService.createProcessInstanceQuery().list().size(), is(0));
     long endTime = System.currentTimeMillis();
+
     LOG.info(" Duration :" + (endTime - startTime));
   }
 

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:activiti="http://activiti.org/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.activiti.org/test">
+  <process id="wf.module.test.bp.timer" name="тестирование таймера" isExecutable="true">
+    <startEvent id="startEvent" name="Start" activiti:initiator="ChangeLimitService" activiti:formKey="ChangeLimitService"></startEvent>
+    <serviceTask id="Task010SaveRequestData" name="Создать и сохранить контейнер БП" activiti:delegateExpression="${noop}"></serviceTask>
+    <endEvent id="endevent1" name="End"></endEvent>
+    <serviceTask id="Task030" name="Сохранить результат БП " activiti:async="true" activiti:delegateExpression="${noop}"></serviceTask>
+    <serviceTask id="Task020" name="Счетчик попыток" activiti:async="true" activiti:delegateExpression="${noop}"></serviceTask>
+    <sequenceFlow id="flow1" sourceRef="startEvent" targetRef="Task010SaveRequestData"></sequenceFlow>
+    <sequenceFlow id="flow19" sourceRef="Task030" targetRef="endevent1"></sequenceFlow>
+    <sequenceFlow id="flow23" sourceRef="Task010SaveRequestData" targetRef="Task020"></sequenceFlow>
+    <serviceTask id="Task025" name="Проверка статуса" activiti:async="true" activiti:delegateExpression="${noop}"></serviceTask>
+    <intermediateCatchEvent id="timerintermediatecatchevent1" name="TimerCatchEvent">
+      <timerEventDefinition>
+        <timeDuration>PT0H0M10S</timeDuration>
+      </timerEventDefinition>
+    </intermediateCatchEvent>
+    <sequenceFlow id="flow25" sourceRef="Task020" targetRef="timerintermediatecatchevent1"></sequenceFlow>
+    <sequenceFlow id="flow26" sourceRef="timerintermediatecatchevent1" targetRef="Task025"></sequenceFlow>
+    <serviceTask id="Task026" name="Обработка превышения счетчика" activiti:async="true" activiti:delegateExpression="${noop}"></serviceTask>
+    <boundaryEvent id="boundaryerror1" name="Error" attachedToRef="Task025">
+      <errorEventDefinition></errorEventDefinition>
+    </boundaryEvent>
+    <sequenceFlow id="flow27" sourceRef="boundaryerror1" targetRef="Task026"></sequenceFlow>
+    <exclusiveGateway id="exclusivegateway1" name="Exclusive Gateway"></exclusiveGateway>
+    <sequenceFlow id="flow28" sourceRef="Task026" targetRef="exclusivegateway1"></sequenceFlow>
+    <sequenceFlow id="flow29" name="excessCounter= &quot;Y&quot;" sourceRef="exclusivegateway1" targetRef="Task030">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${excessCounter == "Y"}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow30" name="excessCounter = &quot;N&quot;" sourceRef="exclusivegateway1" targetRef="Task020">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${excessCounter == "N"}]]></conditionExpression>
+    </sequenceFlow>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_wf.module.test.bp.timer">
+    <bpmndi:BPMNPlane bpmnElement="wf.module.test.bp.timer" id="BPMNPlane_wf.module.test.bp.timer">
+      <bpmndi:BPMNShape bpmnElement="startEvent" id="BPMNShape_startEvent">
+        <omgdc:Bounds height="35.0" width="35.0" x="20.0" y="142.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="Task010SaveRequestData" id="BPMNShape_Task010SaveRequestData">
+        <omgdc:Bounds height="80.0" width="100.0" x="105.0" y="120.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="endevent1" id="BPMNShape_endevent1">
+        <omgdc:Bounds height="35.0" width="35.0" x="295.0" y="468.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="Task020" id="BPMNShape_Task020">
+        <omgdc:Bounds height="55.0" width="105.0" x="280.0" y="132.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="Task030" id="BPMNShape_Task030">
+        <omgdc:Bounds height="55.0" width="105.0" x="260.0" y="368.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="Task025" id="BPMNShape_Task025">
+        <omgdc:Bounds height="55.0" width="105.0" x="620.0" y="132.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="timerintermediatecatchevent1" id="BPMNShape_timerintermediatecatchevent1">
+        <omgdc:Bounds height="35.0" width="35.0" x="480.0" y="142.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="Task026" id="BPMNShape_Task026">
+        <omgdc:Bounds height="71.0" width="105.0" x="622.0" y="230.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="boundaryerror1" id="BPMNShape_boundaryerror1">
+        <omgdc:Bounds height="30.0" width="30.0" x="660.0" y="172.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="exclusivegateway1" id="BPMNShape_exclusivegateway1">
+        <omgdc:Bounds height="40.0" width="40.0" x="477.0" y="245.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="flow1" id="BPMNEdge_flow1">
+        <omgdi:waypoint x="55.0" y="159.0"></omgdi:waypoint>
+        <omgdi:waypoint x="105.0" y="160.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow19" id="BPMNEdge_flow19">
+        <omgdi:waypoint x="312.0" y="423.0"></omgdi:waypoint>
+        <omgdi:waypoint x="312.0" y="468.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow23" id="BPMNEdge_flow23">
+        <omgdi:waypoint x="205.0" y="160.0"></omgdi:waypoint>
+        <omgdi:waypoint x="280.0" y="159.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow25" id="BPMNEdge_flow25">
+        <omgdi:waypoint x="385.0" y="159.0"></omgdi:waypoint>
+        <omgdi:waypoint x="480.0" y="159.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow26" id="BPMNEdge_flow26">
+        <omgdi:waypoint x="515.0" y="159.0"></omgdi:waypoint>
+        <omgdi:waypoint x="620.0" y="159.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow27" id="BPMNEdge_flow27">
+        <omgdi:waypoint x="675.0" y="202.0"></omgdi:waypoint>
+        <omgdi:waypoint x="674.0" y="230.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow28" id="BPMNEdge_flow28">
+        <omgdi:waypoint x="622.0" y="265.0"></omgdi:waypoint>
+        <omgdi:waypoint x="517.0" y="265.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow29" id="BPMNEdge_flow29">
+        <omgdi:waypoint x="497.0" y="285.0"></omgdi:waypoint>
+        <omgdi:waypoint x="497.0" y="397.0"></omgdi:waypoint>
+        <omgdi:waypoint x="365.0" y="395.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="14.0" width="99.0" x="-103.0" y="12.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow30" id="BPMNEdge_flow30">
+        <omgdi:waypoint x="477.0" y="265.0"></omgdi:waypoint>
+        <omgdi:waypoint x="332.0" y="265.0"></omgdi:waypoint>
+        <omgdi:waypoint x="332.0" y="187.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="42.0" width="100.0" x="10.0" y="0.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>
