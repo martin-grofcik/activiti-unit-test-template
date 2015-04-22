@@ -1,26 +1,17 @@
 package org.activiti;
+
+import org.activiti.engine.impl.test.PluggableActivitiTestCase;
 import org.activiti.engine.runtime.ProcessInstance;
-import org.activiti.engine.task.Task;
-import org.activiti.engine.test.ActivitiRule;
 import org.activiti.engine.test.Deployment;
-import org.junit.Rule;
-import org.junit.Test;
 
-import static org.junit.Assert.*;
-
-public class MyUnitTest {
+public class MyUnitTest extends PluggableActivitiTestCase {
 	
-	@Rule
-	public ActivitiRule activitiRule = new ActivitiRule();
-	
-	@Test
-	@Deployment(resources = {"org/activiti/test/my-process.bpmn20.xml"})
-	public void test() {
-		ProcessInstance processInstance = activitiRule.getRuntimeService().startProcessInstanceByKey("my-process");
+	@Deployment(resources = {"org/activiti/test/main-process.bpmn20.xml"
+			, "org/activiti/test/call-activity-process.bpmn20.xml"})
+	public void testAbdullahIssue() {
+		ProcessInstance processInstance = this.runtimeService.startProcessInstanceByKey("main-process");
+	    waitForJobExecutorToProcessAllJobs(100000L, 100);
 		assertNotNull(processInstance);
-		
-		Task task = activitiRule.getTaskService().createTaskQuery().singleResult();
-		assertEquals("Activiti is awesome!", task.getName());
 	}
 
 }

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:activiti="http://activiti.org/bpmn"
+             typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://www.activiti.org/test">
+    <process id="subprocess" name="Sub" isExecutable="true">
+        <startEvent id="startevent1" name="Start"></startEvent>
+        <serviceTask id="servicetask1" name="Service Task" activiti:async="true" activiti:exclusive="false"
+                     activiti:class="org.activiti.delegates.ServiceTask"></serviceTask>
+        <endEvent id="endevent1" name="End"></endEvent>
+        <sequenceFlow id="flow1" sourceRef="servicetask1" targetRef="endevent1"></sequenceFlow>
+        <sequenceFlow id="flow2" sourceRef="startevent1" targetRef="servicetask1"></sequenceFlow>
+    </process>
+ </definitions>

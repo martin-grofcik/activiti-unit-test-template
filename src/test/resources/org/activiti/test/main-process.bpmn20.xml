@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://www.activiti.org/test">
+    <process id="main-process" isExecutable="true">
+        <startEvent id="start"></startEvent>
+        <callActivity id="callactivity1" name="Call activity" calledElement="subprocess">
+            <multiInstanceLoopCharacteristics isSequential="false">
+                <loopCardinality>2</loopCardinality>
+            </multiInstanceLoopCharacteristics>
+        </callActivity>
+        <sequenceFlow id="flow1" sourceRef="start" targetRef="callactivity1"></sequenceFlow>
+        <endEvent id="endevent1" name="End"></endEvent>
+        <sequenceFlow id="flow2" sourceRef="callactivity1" targetRef="endevent1"></sequenceFlow>
+    </process>
+
+</definitions>
