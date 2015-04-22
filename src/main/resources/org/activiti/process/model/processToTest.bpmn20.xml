@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+			 typeLanguage="http://www.w3.org/2001/XMLSchema"
+			 expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="runtime">
+
+	<process id="processToTest" name="processToTest">
+
+		<startEvent id="start" />
+		<sequenceFlow id="flow1" sourceRef="start" targetRef="theFirstTask" />
+		
+		<userTask id="theFirstTask" name="Activiti is awesome!" />
+		<sequenceFlow id="flow2" sourceRef="theFirstTask" targetRef="theSecondTask" />
+
+		<userTask id="theSecondTask" name="Testing is awesome!"/>
+		<sequenceFlow id="flow3" sourceRef="theSecondTask" targetRef="end"/>
+
+		<endEvent id="end" />
+
+	</process>
+
+</definitions>

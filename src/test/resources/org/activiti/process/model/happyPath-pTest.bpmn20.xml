@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+			 typeLanguage="http://www.w3.org/2001/XMLSchema"
+			 expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="pTest">
+
+	<process id="happyPath-pTest" name="happyPathTest">
+
+		<startEvent id="start" />
+		<sequenceFlow id="flow1" sourceRef="start" targetRef="createEngine" />
+		
+		<scriptTask id="createEngine" name="createEngine" scriptFormat="Groovy">
+			<script>
+				testProcessEngineConfiguration = org.activiti.engine.ProcessEngineConfiguration.createProcessEngineConfigurationFromResource("activiti.cfg.xml");
+				testProcessEngineConfiguration.buildProcessEngine();
+			</script>
+		</scriptTask>
+		<sequenceFlow id="flow2" sourceRef="createEngine" targetRef="deployProcessModel" />
+
+		<scriptTask id="deployProcessModel" name="deployProcessModel" scriptFormat="Groovy">
+			<script>
+				testProcessEngine = org.activiti.engine.ProcessEngines.getProcessEngine("processEngineToPerformTest");
+				repositoryService = testProcessEngine.getRepositoryService();
+				repositoryService.createDeployment().addClasspathResource("org/activiti/process/model/processToTest.bpmn20.xml").deploy();
+			</script>
+		</scriptTask>
+		<sequenceFlow id="flow3" sourceRef="deployProcessModel" targetRef="startProcessInstance"/>
+
+		<scriptTask id="startProcessInstance" name="startProcessInstance" scriptFormat="Groovy">
+			<script>
+				testProcessEngine = org.activiti.engine.ProcessEngines.getProcessEngine("processEngineToPerformTest");
+				processToTest = testProcessEngine.getRuntimeService().startProcessInstanceByKey("processToTest");
+				execution.setVariable("processInstanceId", processToTest.getProcessInstanceId());
+			</script>
+		</scriptTask>
+		<sequenceFlow id="flow4" sourceRef="startProcessInstance" targetRef="completeTask1"/>
+
+		<scriptTask id="completeTask1" name="completeTask1" scriptFormat="Groovy">
+			<script>
+				testProcessEngine = org.activiti.engine.ProcessEngines.getProcessEngine("processEngineToPerformTest");
+				task = testProcessEngine.getTaskService().createTaskQuery().taskName("Activiti is awesome!").singleResult();
+				variables = new java.util.HashMap();
+				variables.put("updatedVariable", "updatedValue");
+				testProcessEngine.getTaskService().complete(task.getId(), variables);
+			</script>
+		</scriptTask>
+		<sequenceFlow id="flow5" sourceRef="completeTask1" targetRef="assertThatVarExists"/>
+
+		<scriptTask id="assertThatVarExists" name="assertThatVarExists" scriptFormat="Groovy">
+			<script>
+				import static org.hamcrest.CoreMatchers.is;
+				import static org.activiti.ptest.MatcherAssert.assertThat;
+
+				// assert that variables are there
+				testProcessEngine = org.activiti.engine.ProcessEngines.getProcessEngine("processEngineToPerformTest");
+				processInstanceId = execution.getVariable("processInstanceId");
+				String variableValue = (String) testProcessEngine.getRuntimeService().getVariable(processInstanceId, "updatedVariable");
+				assertThat("Process instance has to have variable set.", variableValue, is("updatedValue"));
+			</script>
+		</scriptTask>
+		<sequenceFlow id="flow7" sourceRef="assertThatVarExists" targetRef="completeTask2"/>
+
+		<scriptTask id="completeTask2" name="completeTask2" scriptFormat="Groovy">
+			<script>
+				testProcessEngine = org.activiti.engine.ProcessEngines.getProcessEngine("processEngineToPerformTest");
+				task = testProcessEngine.getTaskService().createTaskQuery().taskName("Testing is awesome!").singleResult();
+				testProcessEngine.getTaskService().complete(task.getId());
+			</script>
+		</scriptTask>
+		<sequenceFlow id="flow8" sourceRef="completeTask2" targetRef="assertThatProcessIsFinished"/>
+
+		<scriptTask id="assertThatProcessIsFinished" name="assertThatProcessIsFinished" scriptFormat="Groovy">
+			<script>
+				import static org.hamcrest.CoreMatchers.is;
+				import static org.activiti.ptest.MatcherAssert.assertThat;
+
+				testProcessEngine = org.activiti.engine.ProcessEngines.getProcessEngine("processEngineToPerformTest");
+				processInstanceId = execution.getVariable("processInstanceId");
+				runningProcessInstances = testProcessEngine.getRuntimeService().createProcessInstanceQuery().processInstanceId(processInstanceId).list();
+				assertThat("There is no such process instance running.", runningProcessInstances.isEmpty());
+			</script>
+		</scriptTask>
+		<sequenceFlow id="flow6" sourceRef="assertThatProcessIsFinished" targetRef="end"/>
+
+		<endEvent id="end" />
+
+	</process>
+
+</definitions>
