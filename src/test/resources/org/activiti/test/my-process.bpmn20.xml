@@ -1,18 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:activiti="http://activiti.org/bpmn"
-	xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
-	xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" typeLanguage="http://www.w3.org/2001/XMLSchema"
-	expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.activiti.org/test">
+			 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:activiti="http://activiti.org/bpmn"
+			 typeLanguage="http://www.w3.org/2001/XMLSchema"
+			 expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.activiti.org/test">
 
 	<process id="my-process">
 
 		<startEvent id="start" />
-		<sequenceFlow id="flow1" sourceRef="start" targetRef="someTask" />
-		
-		<userTask id="someTask" name="Activiti is awesome!" />
-		<sequenceFlow id="flow2" sourceRef="someTask" targetRef="end" />
+		<sequenceFlow id="flow1" sourceRef="start" targetRef="increment" />
+
+		<scriptTask id="increment" scriptFormat="groovy">
+			<script>
+				execution.setVariable("counter", counter + 1);
+			</script>
+		</scriptTask>
+		<sequenceFlow id="flow2" sourceRef="increment" targetRef="decision"/>
+
+		<exclusiveGateway id="decision"/>
+		<sequenceFlow id="flow3" sourceRef="decision" targetRef="someTask">
+			<conditionExpression xsi:type="tFormalExpression">${counter == 10}</conditionExpression>
+		</sequenceFlow>
+		<sequenceFlow id="flow4" sourceRef="decision" targetRef="callActivity">
+			<conditionExpression xsi:type="tFormalExpression">${counter &lt; 10}</conditionExpression>
+		</sequenceFlow>
+
+		<callActivity id="callActivity" calledElement="my-process">
+			<extensionElements>
+				<activiti:in source="counter" target="counter"/>
+			</extensionElements>
+		</callActivity>
+		<sequenceFlow id="flow5" sourceRef="callActivity" targetRef="end"/>
+
+		<userTask id="someTask" name="Activiti is awesome ${counter}!" />
+		<sequenceFlow id="flowEnd" sourceRef="someTask" targetRef="end" />
 
 		<endEvent id="end" />
 
