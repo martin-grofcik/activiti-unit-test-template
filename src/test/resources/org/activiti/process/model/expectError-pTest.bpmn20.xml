@@ -5,7 +5,7 @@
 			 expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="pUnit">
 	<error id="testFailedError" errorCode="123"/>
 
-	<process id="expectError-pTest" name="ExpectError">
+	<process id="expectError-pTest" name="ExpectError-pTest">
 
 		<startEvent id="start" />
 		<sequenceFlow id="flow1" sourceRef="start" targetRef="createEngine" />

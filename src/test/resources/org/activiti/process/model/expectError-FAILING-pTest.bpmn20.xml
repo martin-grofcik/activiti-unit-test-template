@@ -4,7 +4,7 @@
 			 typeLanguage="http://www.w3.org/2001/XMLSchema"
 			 expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="pUnit">
 
-	<process id="expectError-FAILING-pTest" name="ExpectError-FAILING">
+	<process id="expectError-FAILING-pTest" name="ExpectError-FAILING-pTest">
 
 		<startEvent id="start" />
 		<sequenceFlow id="flow1" sourceRef="start" targetRef="createEngine" />
