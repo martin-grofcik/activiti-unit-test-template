@@ -4,7 +4,7 @@
 			 typeLanguage="http://www.w3.org/2001/XMLSchema"
 			 expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="pUnit">
 
-	<process id="happyPath-pTest" name="happyPathTest-pTest">
+	<process id="expectError-FAILING-pTest" name="ExpectError-FAILING">
 
 		<startEvent id="start" />
 		<sequenceFlow id="flow1" sourceRef="start" targetRef="createEngine" />
@@ -44,43 +44,12 @@
 				testProcessEngine.getTaskService().complete(task.getId(), variables);
 			</script>
 		</scriptTask>
-		<sequenceFlow id="flow5" sourceRef="completeTask1" targetRef="assertThatVarExists"/>
+		<sequenceFlow id="flow5" sourceRef="completeTask1" targetRef="closeEngineBeforeFail"/>
 
-		<scriptTask id="assertThatVarExists" name="assertThatVarExists" scriptFormat="Groovy">
-			<script>
-				import static org.hamcrest.CoreMatchers.is;
-				import static org.activiti.ptest.MatcherAssert.assertThat;
-
-				// assert that variables are there
-				testProcessEngine = org.activiti.engine.ProcessEngines.getProcessEngine("processEngineToPerformTest");
-				processInstanceId = execution.getVariable("processInstanceId");
-				String variableValue = (String) testProcessEngine.getRuntimeService().getVariable(processInstanceId, "updatedVariable");
-				assertThat("Process instance has to have variable set.", variableValue, is("updatedValue"));
-			</script>
-		</scriptTask>
-		<sequenceFlow id="flow7" sourceRef="assertThatVarExists" targetRef="completeTask2"/>
-
-		<scriptTask id="completeTask2" name="completeTask2" scriptFormat="Groovy">
-			<script>
-				testProcessEngine = org.activiti.engine.ProcessEngines.getProcessEngine("processEngineToPerformTest");
-				task = testProcessEngine.getTaskService().createTaskQuery().taskName("Testing is awesome!").singleResult();
-				testProcessEngine.getTaskService().complete(task.getId());
-			</script>
-		</scriptTask>
-		<sequenceFlow id="flow8" sourceRef="completeTask2" targetRef="assertThatProcessIsFinished"/>
-
-		<scriptTask id="assertThatProcessIsFinished" name="assertThatProcessIsFinished" scriptFormat="Groovy">
-			<script>
-				import static org.hamcrest.CoreMatchers.is;
-				import static org.activiti.ptest.MatcherAssert.assertThat;
-
-				testProcessEngine = org.activiti.engine.ProcessEngines.getProcessEngine("processEngineToPerformTest");
-				processInstanceId = execution.getVariable("processInstanceId");
-				runningProcessInstances = testProcessEngine.getRuntimeService().createProcessInstanceQuery().processInstanceId(processInstanceId).list();
-				assertThat("There is no such process instance running.", runningProcessInstances.isEmpty());
-			</script>
-		</scriptTask>
-		<sequenceFlow id="flow6" sourceRef="assertThatProcessIsFinished" targetRef="closeEngine"/>
+		<boundaryEvent id="expectError" attachedToRef="completeTask1">
+			<errorEventDefinition/>
+		</boundaryEvent>
+		<sequenceFlow id="flow6" sourceRef="expectError" targetRef="closeEngine"/>
 
 		<scriptTask id="closeEngine" name="Close engine" scriptFormat="Groovy">
 			<script>
@@ -91,6 +60,18 @@
 		<sequenceFlow id="flow9" sourceRef="closeEngine" targetRef="end"/>
 
 		<endEvent id="end" />
+
+		<scriptTask id="closeEngineBeforeFail" name="Close engine before fail" scriptFormat="Groovy">
+			<script>
+				testProcessEngine = org.activiti.engine.ProcessEngines.getProcessEngine("processEngineToPerformTest");
+				testProcessEngine.close();
+			</script>
+		</scriptTask>
+		<sequenceFlow id="flow10" sourceRef="closeEngineBeforeFail" targetRef="testFailed"/>
+
+		<endEvent id="testFailed">
+			<errorEventDefinition errorRef="testFailedError"/>
+		</endEvent>
 
 	</process>
 

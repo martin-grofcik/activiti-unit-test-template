@@ -10,11 +10,11 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 
 
-public class pTestEngine {
+public class pUnitEngine {
 
-	private static final Logger log = LoggerFactory.getLogger(pTestEngine.class);
+	private static final Logger log = LoggerFactory.getLogger(pUnitEngine.class);
 
-	private static final String PTEST_PROCESS_CATEGORY = "pTest";
+	private static final String PUNIT_TEST_PROCESS_CATEGORY = "pUnit";
 
 	static public void main(String[] args) {
 		ProcessEngine testProcessEngine = createTestProcessEngine();
@@ -29,14 +29,16 @@ public class pTestEngine {
 	}
 
 	private static ProcessEngine createTestProcessEngine() {
-		ProcessEngineConfiguration testProcessEngineConfiguration = ProcessEngineConfiguration.createProcessEngineConfigurationFromResource("activiti-pTest.cfg.xml");
+		ProcessEngineConfiguration testProcessEngineConfiguration = ProcessEngineConfiguration.createProcessEngineConfigurationFromResource("activiti-pUnit.cfg.xml");
 		return testProcessEngineConfiguration.buildProcessEngine();
 	}
 
 	private static List<ProcessDefinition> getTests(ProcessEngine testProcessEngine) {
 		return testProcessEngine.getRepositoryService().createProcessDefinitionQuery().
-                    processDefinitionCategory(PTEST_PROCESS_CATEGORY).
-                    list();
+				processDefinitionNameLike("%-pTest").
+                processDefinitionCategory(PUNIT_TEST_PROCESS_CATEGORY).
+				active().
+                list();
 	}
 
 	private static void runTests(ProcessEngine testProcessEngine, List<ProcessDefinition> tests) {
@@ -46,7 +48,7 @@ public class pTestEngine {
 				testProcessEngine.getRuntimeService().startProcessInstanceById(test.getId());
 				log.info("{} done.", test.getName());
 			} catch (BpmnError e) {
-				log.error("{} error. Description:", test.getName());
+				log.error("{} error. Description:{}", test.getName(), e.getMessage());
 			}
 		}
 	}
