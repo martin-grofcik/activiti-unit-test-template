@@ -1,21 +1,260 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:activiti="http://activiti.org/bpmn"
-	xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
-	xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" typeLanguage="http://www.w3.org/2001/XMLSchema"
-	expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.activiti.org/test">
-
-	<process id="my-process">
-
-		<startEvent id="start" />
-		<sequenceFlow id="flow1" sourceRef="start" targetRef="someTask" />
-		
-		<userTask id="someTask" name="Activiti is awesome!" />
-		<sequenceFlow id="flow2" sourceRef="someTask" targetRef="end" />
-
-		<endEvent id="end" />
-
+			 xmlns:activiti="http://activiti.org/bpmn"
+			 xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+			 xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+			 typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath"
+			 targetNamespace="http://www.activiti.org/test">
+	<signal id="cancelarServiceRequestRef" name="cancelarServiceRequestRef" activiti:scope="processInstance"></signal>
+	<signal id="cancelarTaskRef" name="cancelarTaskRef" activiti:scope="processInstance"></signal>
+	<process id="myProcessTest" name="My process" isExecutable="true">
+		<startEvent id="startevent1" name="Start"></startEvent>
+		<sequenceFlow id="flow1" sourceRef="startevent1" targetRef="scripttask1"></sequenceFlow>
+		<subProcess id="subprocess1" name="Subproceso Principal">
+			<subProcess id="subprocess2" name="Subproceso Tareas">
+				<multiInstanceLoopCharacteristics isSequential="false" activiti:collection="taskList"
+												  activiti:elementVariable="task"></multiInstanceLoopCharacteristics>
+				<startEvent id="startevent3" name="Start">
+					<extensionElements>
+						<activiti:executionListener event="start"
+													class="com.demo.delegate.StartSubProcessListener"></activiti:executionListener>
+					</extensionElements>
+				</startEvent>
+				<scriptTask id="scripttask4" name="Script Task" scriptFormat="groovy"
+							activiti:autoStoreVariables="false">
+					<script>out:println "Nueva Tarea Num " + task;
+						execution.setVariable("taskvar", task);
+					</script>
+				</scriptTask>
+				<sequenceFlow id="flow15" sourceRef="startevent3" targetRef="scripttask4"></sequenceFlow>
+				<subProcess id="subprocess3" name="Manejo Cancelación Tarea">
+					<userTask id="usertask1" name="Confirmar Tarea" activiti:assignee="kermit"></userTask>
+					<sequenceFlow id="flow21" sourceRef="usertask1" targetRef="scripttask6"></sequenceFlow>
+					<endEvent id="endevent5" name="End"></endEvent>
+					<scriptTask id="scripttask6" name="Procesar Confirmar Tarea" scriptFormat="groovy"
+								activiti:autoStoreVariables="false">
+						<script>out:println "Procesar Confirmar Tarea"</script>
+					</scriptTask>
+					<sequenceFlow id="flow22" sourceRef="scripttask6" targetRef="endevent5"></sequenceFlow>
+					<startEvent id="startevent4" name="Start"></startEvent>
+					<sequenceFlow id="flow23" sourceRef="startevent4" targetRef="usertask1"></sequenceFlow>
+				</subProcess>
+				<sequenceFlow id="flow17" sourceRef="scripttask4" targetRef="subprocess3"></sequenceFlow>
+				<scriptTask id="scripttask5" name="Cancelar Tarea" scriptFormat="groovy"
+							activiti:autoStoreVariables="false">
+					<script>out:println "Procesar Cancelar Tarea --&gt;" + task</script>
+				</scriptTask>
+				<endEvent id="endevent4" name="End"></endEvent>
+				<sequenceFlow id="flow20" sourceRef="scripttask5" targetRef="endevent4"></sequenceFlow>
+				<boundaryEvent id="boundarysignal2" name="Signal" attachedToRef="subprocess3" cancelActivity="true">
+					<signalEventDefinition signalRef="cancelarTaskRef"></signalEventDefinition>
+				</boundaryEvent>
+				<sequenceFlow id="flow28" sourceRef="boundarysignal2" targetRef="scripttask5"></sequenceFlow>
+				<receiveTask id="receivetask4" name="Receive Task"></receiveTask>
+				<sequenceFlow id="flow14" sourceRef="receivetask4"
+							  targetRef="signalintermediatethrowevent1"></sequenceFlow>
+				<intermediateThrowEvent id="signalintermediatethrowevent1" name="SignalThrowEvent">
+					<signalEventDefinition signalRef="cancelarTaskRef"></signalEventDefinition>
+				</intermediateThrowEvent>
+				<sequenceFlow id="flow29" sourceRef="scripttask4" targetRef="receivetask4"></sequenceFlow>
+			</subProcess>
+			<startEvent id="startevent2" name="Start"></startEvent>
+			<scriptTask id="scripttask3" name="Iniciar Solicitud" scriptFormat="groovy"
+						activiti:autoStoreVariables="false">
+				<script>out:println "Dentro del primer subproceso"</script>
+			</scriptTask>
+			<sequenceFlow id="flow8" sourceRef="startevent2" targetRef="scripttask3"></sequenceFlow>
+			<endEvent id="endevent3" name="End"></endEvent>
+			<sequenceFlow id="flow18" sourceRef="subprocess2" targetRef="endevent3"></sequenceFlow>
+			<userTask id="usertask2" name="Iniciar SR" activiti:assignee="kermit"></userTask>
+			<sequenceFlow id="flow24" sourceRef="scripttask3" targetRef="usertask2"></sequenceFlow>
+			<sequenceFlow id="flow25" sourceRef="usertask2" targetRef="subprocess2"></sequenceFlow>
+		</subProcess>
+		<sequenceFlow id="flow2" sourceRef="scripttask1" targetRef="subprocess1"></sequenceFlow>
+		<scriptTask id="scripttask1" name="Service Task" scriptFormat="groovy" activiti:autoStoreVariables="false">
+			<script>out:println "Test Subprocess"</script>
+		</scriptTask>
+		<receiveTask id="receivetask1" name="Esperar Cancelación"></receiveTask>
+		<sequenceFlow id="flow3" sourceRef="scripttask1" targetRef="receivetask1"></sequenceFlow>
+		<boundaryEvent id="boundarysignal1" name="Signal" attachedToRef="subprocess1" cancelActivity="true">
+			<signalEventDefinition signalRef="cancelarServiceRequestRef"></signalEventDefinition>
+		</boundaryEvent>
+		<scriptTask id="scripttask2" name="Cancelar Service Request" scriptFormat="groovy"
+					activiti:autoStoreVariables="false">
+			<script>out:println "Cancelar Service Request"</script>
+		</scriptTask>
+		<sequenceFlow id="flow5" sourceRef="boundarysignal1" targetRef="scripttask2"></sequenceFlow>
+		<endEvent id="endevent1" name="End"></endEvent>
+		<sequenceFlow id="flow6" sourceRef="scripttask2" targetRef="endevent1"></sequenceFlow>
+		<endEvent id="endevent2" name="End"></endEvent>
+		<sequenceFlow id="flow7" sourceRef="subprocess1" targetRef="endevent2"></sequenceFlow>
+		<intermediateThrowEvent id="signalintermediatethrowevent2" name="SignalThrowEvent">
+			<signalEventDefinition signalRef="cancelarServiceRequestRef"></signalEventDefinition>
+		</intermediateThrowEvent>
+		<sequenceFlow id="flow26" sourceRef="receivetask1" targetRef="signalintermediatethrowevent2"></sequenceFlow>
 	</process>
-
+	<bpmndi:BPMNDiagram id="BPMNDiagram_myProcessTest">
+		<bpmndi:BPMNPlane bpmnElement="myProcessTest" id="BPMNPlane_myProcessTest">
+			<bpmndi:BPMNShape bpmnElement="startevent1" id="BPMNShape_startevent1">
+				<omgdc:Bounds height="35.0" width="35.0" x="90.0" y="210.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="subprocess1" id="BPMNShape_subprocess1">
+				<omgdc:Bounds height="521.0" width="1291.0" x="400.0" y="10.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="subprocess2" id="BPMNShape_subprocess2">
+				<omgdc:Bounds height="361.0" width="731.0" x="780.0" y="40.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="startevent3" id="BPMNShape_startevent3">
+				<omgdc:Bounds height="35.0" width="35.0" x="810.0" y="153.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="scripttask4" id="BPMNShape_scripttask4">
+				<omgdc:Bounds height="55.0" width="105.0" x="880.0" y="143.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="subprocess3" id="BPMNShape_subprocess3">
+				<omgdc:Bounds height="181.0" width="431.0" x="1030.0" y="80.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="usertask1" id="BPMNShape_usertask1">
+				<omgdc:Bounds height="55.0" width="105.0" x="1120.0" y="124.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="endevent5" id="BPMNShape_endevent5">
+				<omgdc:Bounds height="35.0" width="35.0" x="1400.0" y="134.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="scripttask6" id="BPMNShape_scripttask6">
+				<omgdc:Bounds height="67.0" width="105.0" x="1270.0" y="118.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="startevent4" id="BPMNShape_startevent4">
+				<omgdc:Bounds height="35.0" width="35.0" x="1050.0" y="134.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="boundarysignal2" id="BPMNShape_boundarysignal2">
+				<omgdc:Bounds height="30.0" width="30.0" x="1160.0" y="250.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="scripttask5" id="BPMNShape_scripttask5">
+				<omgdc:Bounds height="55.0" width="105.0" x="1256.0" y="310.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="endevent4" id="BPMNShape_endevent4">
+				<omgdc:Bounds height="35.0" width="35.0" x="1406.0" y="320.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="receivetask4" id="BPMNShape_receivetask4">
+				<omgdc:Bounds height="55.0" width="105.0" x="880.0" y="310.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="signalintermediatethrowevent1" id="BPMNShape_signalintermediatethrowevent1">
+				<omgdc:Bounds height="35.0" width="35.0" x="1050.0" y="320.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="startevent2" id="BPMNShape_startevent2">
+				<omgdc:Bounds height="35.0" width="35.0" x="420.0" y="193.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="scripttask3" id="BPMNShape_scripttask3">
+				<omgdc:Bounds height="64.0" width="105.0" x="500.0" y="179.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="endevent3" id="BPMNShape_endevent3">
+				<omgdc:Bounds height="35.0" width="35.0" x="1550.0" y="208.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="usertask2" id="BPMNShape_usertask2">
+				<omgdc:Bounds height="55.0" width="105.0" x="640.0" y="183.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="boundarysignal1" id="BPMNShape_boundarysignal1">
+				<omgdc:Bounds height="30.0" width="30.0" x="810.0" y="510.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="scripttask1" id="BPMNShape_scripttask1">
+				<omgdc:Bounds height="55.0" width="105.0" x="170.0" y="200.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="receivetask1" id="BPMNShape_receivetask1">
+				<omgdc:Bounds height="55.0" width="105.0" x="170.0" y="30.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="scripttask2" id="BPMNShape_scripttask2">
+				<omgdc:Bounds height="75.0" width="121.0" x="882.0" y="570.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="endevent1" id="BPMNShape_endevent1">
+				<omgdc:Bounds height="35.0" width="35.0" x="1105.0" y="590.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="endevent2" id="BPMNShape_endevent2">
+				<omgdc:Bounds height="35.0" width="35.0" x="1730.0" y="213.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="signalintermediatethrowevent2" id="BPMNShape_signalintermediatethrowevent2">
+				<omgdc:Bounds height="35.0" width="35.0" x="320.0" y="40.0"></omgdc:Bounds>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge bpmnElement="flow1" id="BPMNEdge_flow1">
+				<omgdi:waypoint x="125.0" y="227.0"></omgdi:waypoint>
+				<omgdi:waypoint x="170.0" y="227.0"></omgdi:waypoint>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge bpmnElement="flow15" id="BPMNEdge_flow15">
+				<omgdi:waypoint x="845.0" y="170.0"></omgdi:waypoint>
+				<omgdi:waypoint x="880.0" y="170.0"></omgdi:waypoint>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge bpmnElement="flow21" id="BPMNEdge_flow21">
+				<omgdi:waypoint x="1225.0" y="151.0"></omgdi:waypoint>
+				<omgdi:waypoint x="1270.0" y="151.0"></omgdi:waypoint>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge bpmnElement="flow22" id="BPMNEdge_flow22">
+				<omgdi:waypoint x="1375.0" y="151.0"></omgdi:waypoint>
+				<omgdi:waypoint x="1400.0" y="151.0"></omgdi:waypoint>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge bpmnElement="flow23" id="BPMNEdge_flow23">
+				<omgdi:waypoint x="1085.0" y="151.0"></omgdi:waypoint>
+				<omgdi:waypoint x="1120.0" y="151.0"></omgdi:waypoint>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge bpmnElement="flow17" id="BPMNEdge_flow17">
+				<omgdi:waypoint x="985.0" y="170.0"></omgdi:waypoint>
+				<omgdi:waypoint x="1030.0" y="170.0"></omgdi:waypoint>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge bpmnElement="flow20" id="BPMNEdge_flow20">
+				<omgdi:waypoint x="1361.0" y="337.0"></omgdi:waypoint>
+				<omgdi:waypoint x="1406.0" y="337.0"></omgdi:waypoint>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge bpmnElement="flow28" id="BPMNEdge_flow28">
+				<omgdi:waypoint x="1175.0" y="280.0"></omgdi:waypoint>
+				<omgdi:waypoint x="1174.0" y="337.0"></omgdi:waypoint>
+				<omgdi:waypoint x="1256.0" y="337.0"></omgdi:waypoint>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge bpmnElement="flow14" id="BPMNEdge_flow14">
+				<omgdi:waypoint x="985.0" y="337.0"></omgdi:waypoint>
+				<omgdi:waypoint x="1050.0" y="337.0"></omgdi:waypoint>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge bpmnElement="flow29" id="BPMNEdge_flow29">
+				<omgdi:waypoint x="932.0" y="198.0"></omgdi:waypoint>
+				<omgdi:waypoint x="932.0" y="310.0"></omgdi:waypoint>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge bpmnElement="flow8" id="BPMNEdge_flow8">
+				<omgdi:waypoint x="455.0" y="210.0"></omgdi:waypoint>
+				<omgdi:waypoint x="500.0" y="211.0"></omgdi:waypoint>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge bpmnElement="flow18" id="BPMNEdge_flow18">
+				<omgdi:waypoint x="1511.0" y="220.0"></omgdi:waypoint>
+				<omgdi:waypoint x="1550.0" y="225.0"></omgdi:waypoint>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge bpmnElement="flow24" id="BPMNEdge_flow24">
+				<omgdi:waypoint x="605.0" y="211.0"></omgdi:waypoint>
+				<omgdi:waypoint x="640.0" y="210.0"></omgdi:waypoint>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge bpmnElement="flow25" id="BPMNEdge_flow25">
+				<omgdi:waypoint x="745.0" y="210.0"></omgdi:waypoint>
+				<omgdi:waypoint x="780.0" y="220.0"></omgdi:waypoint>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge bpmnElement="flow2" id="BPMNEdge_flow2">
+				<omgdi:waypoint x="275.0" y="227.0"></omgdi:waypoint>
+				<omgdi:waypoint x="400.0" y="270.0"></omgdi:waypoint>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge bpmnElement="flow3" id="BPMNEdge_flow3">
+				<omgdi:waypoint x="222.0" y="200.0"></omgdi:waypoint>
+				<omgdi:waypoint x="222.0" y="85.0"></omgdi:waypoint>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge bpmnElement="flow5" id="BPMNEdge_flow5">
+				<omgdi:waypoint x="825.0" y="540.0"></omgdi:waypoint>
+				<omgdi:waypoint x="824.0" y="607.0"></omgdi:waypoint>
+				<omgdi:waypoint x="882.0" y="607.0"></omgdi:waypoint>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge bpmnElement="flow6" id="BPMNEdge_flow6">
+				<omgdi:waypoint x="1003.0" y="607.0"></omgdi:waypoint>
+				<omgdi:waypoint x="1105.0" y="607.0"></omgdi:waypoint>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge bpmnElement="flow7" id="BPMNEdge_flow7">
+				<omgdi:waypoint x="1691.0" y="270.0"></omgdi:waypoint>
+				<omgdi:waypoint x="1747.0" y="248.0"></omgdi:waypoint>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge bpmnElement="flow26" id="BPMNEdge_flow26">
+				<omgdi:waypoint x="275.0" y="57.0"></omgdi:waypoint>
+				<omgdi:waypoint x="320.0" y="57.0"></omgdi:waypoint>
+			</bpmndi:BPMNEdge>
+		</bpmndi:BPMNPlane>
+	</bpmndi:BPMNDiagram>
 </definitions>
