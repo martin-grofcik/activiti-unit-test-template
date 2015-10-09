@@ -12,13 +12,14 @@ import org.junit.Test;
 
 import java.util.*;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 public class MyUnitTest {
-	
+
 	@Rule
 	public ActivitiRule activitiRule = new ActivitiRule();
-	
+
 	@Test
 	@Deployment(resources = {"org/activiti/test/my-process.bpmn20.xml"})
 	public void cancelTaskProcess() throws Exception {
@@ -87,6 +88,81 @@ public class MyUnitTest {
 		runtimeService.signal(executionId);
 
 		assertNotNull(processInstance.getId());
+
+	}
+
+	@Test
+	@Deployment(resources = {"org/activiti/test/my-process.bpmn20.xml"})
+	public void cancelFailTaskProcess() throws Exception {
+
+		RuntimeService runtimeService = activitiRule.getRuntimeService();
+
+		List<String> taskList = new ArrayList<String>();
+
+		for (int i = 1; i < 6; i++) {
+			taskList.add("Task Number " + i);
+		}
+
+		System.out.println("Number of tasks " + taskList);
+
+		Map<String, Object> variableMap = new HashMap<String, Object>();
+		variableMap.put("taskList", taskList);
+
+		ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("myProcessTest", variableMap);
+
+		System.out.println("id " + processInstance.getId() + " " + processInstance.getProcessDefinitionId());
+
+		TaskService taskService = activitiRule.getTaskService();
+
+		Task iniciarSRTask = taskService.createTaskQuery().taskName("Iniciar SR").singleResult();
+		taskService.complete(iniciarSRTask.getId());
+
+		System.out.println("Complete Iniciar SR");
+
+		List<Task> bpmTaskList = taskService.createTaskQuery()
+				.taskNameLike("Confirmar Tarea").orderByTaskCreateTime().asc().list();
+
+		System.out.println("============================================");
+		System.out.println("Total tasks: " + bpmTaskList.size());
+		System.out.println("============================================");
+
+
+		//Complete task normally
+		Random rand = new Random();
+		Task randomTask = bpmTaskList.get(rand.nextInt(bpmTaskList.size()));
+		System.out.println("Retrieve a random task");
+		System.out.println("============================================");
+		System.out.println("Task Id -->" + randomTask.getId());
+		System.out.println("Execution Id -->" + randomTask.getExecutionId());
+		System.out.println("============================================");
+
+		System.out.println("Complete Task Normaly");
+		taskService.complete(randomTask.getId());
+
+		System.out.println("Lets cancel task from our Multi-instance");
+
+		List<Execution> executionList = runtimeService.createExecutionQuery()
+				.processInstanceId(processInstance.getId())
+				.activityId("receivetask4")
+				.list();
+
+		System.out.println(executionList);
+
+		Random exeRand = new Random();
+		String executionId = executionList.get(exeRand.nextInt(executionList.size())).getId();
+		System.out.println("Execution Id -->" + executionId);
+
+		//This signal sent through of subprocess instances
+		// :( just need one of them not all
+		runtimeService.signal(executionId);
+
+		List<Task> bpmTaskListTmp = taskService.createTaskQuery()
+				.taskNameLike("Confirmar Tarea").orderByTaskCreateTime().asc().list();
+
+		//Expected size after complete one task normally and send cancel signal for only one sub instance
+		int spectedSize = 3;
+
+		assertEquals(spectedSize, bpmTaskListTmp.size());
 
 	}
 }
