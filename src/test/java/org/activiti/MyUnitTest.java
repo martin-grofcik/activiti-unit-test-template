@@ -7,8 +7,9 @@ import org.activiti.engine.test.Deployment;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.core.IsNull.notNullValue;
+import static org.junit.Assert.assertThat;
 
 public class MyUnitTest {
 
@@ -19,14 +20,16 @@ public class MyUnitTest {
 	@Deployment(resources = {"org/activiti/test/my-process.bpmn20.xml"})
 	public void test() {
 		ProcessInstance processInstance = activitiRule.getRuntimeService().startProcessInstanceByKey("my-process");
-		assertNotNull(processInstance);
-		
+		assertThat("Process instance must be started.", processInstance, is(notNullValue()));
+
 		Task task = activitiRule.getTaskService().createTaskQuery().singleResult();
-		assertEquals("Activiti is awesome!", task.getName());
+		assertThat("Process execution must reach user task.", task.getName(), is("Activiti is awesome!"));
 	}
 
 	@Test
 	public void failingTest() {
-		activitiRule.getRuntimeService().startProcessInstanceByKey("NonExistingKey");
+		ProcessInstance processInstance = activitiRule.getRuntimeService().startProcessInstanceByKey("NonExistingKey");
+
+		assertThat("Process instance must be started.", processInstance, is(notNullValue()));
 	}
 }
