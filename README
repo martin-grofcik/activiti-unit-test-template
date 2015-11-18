@@ -1,1 +1,10 @@
-This is a Maven project which can be used as template when creating a unit test for Activiti.
+This is a Maven project which is used as template when creating a unit test for Activiti.
+
+Rules to reproduce activiti issue:
+1. Use limited set of dependencies. Allowed dependencies are only from org.activiti group and from currently used dependencies in the unit test project template.
+2. Use the minimal possible process model to reproduce the issue.
+3. Issue must be reproducible in one standard jUnit test. (without any further configurations, need to manually perform any action)
+4. The jUnit test must clearly define what is expected behavior and what is the issue.
+5. The test execution has to provide the result in 5 minutes. In the case of long running processes you can use activiti virtual time support.
+6. jUnit test must not use experimental and deprecated activiti features.
+7. The test must be able to be executed automatically from the mvn command line interface. ('mvn test')
